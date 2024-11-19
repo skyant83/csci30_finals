@@ -1,0 +1,5 @@
+{
+    "unwantedRecommendations" : [
+        "tion.evenbettercomments@>=4.0.3"
+    ]
+}

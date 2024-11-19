@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        // "aaron-bond.better-comments",
+        "dzhavat.bracket-pair-toggler",
+        "rosscooper.inline-math",
+        "christian-kohler.path-intellisense",
+        "tion.evenbettercomments"
+    ],
+}
