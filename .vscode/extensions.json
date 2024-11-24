@@ -4,6 +4,7 @@
         "dzhavat.bracket-pair-toggler",
         "rosscooper.inline-math",
         "christian-kohler.path-intellisense",
-        "tion.evenbettercomments"
+        "tion.evenbettercomments",
+        "soulcode.vscode-unwanted-extensions"
     ],
 }
