@@ -32,7 +32,8 @@ class SeamCarver(Picture):
         delta_y2 = dy_r**2 + dy_g**2 + dy_b**2
 
         return math.sqrt(delta_x2 + delta_y2)
-
+    
+    
     def find_vertical_seam(self) -> list[int]:
         '''
         Return a sequence of indices representing the lowest-energy vertical seam
@@ -42,13 +43,20 @@ class SeamCarver(Picture):
         dp = [[sys.maxsize] * width for _ in range(height)]
         path = [[0] * width for _ in range(height)]
 
-        # Initialize the top row
+        '''
+        Initialize the top row
+        
         for i in range(width):
             dp[0][i] = energy_map[0][i]
+        '''
 
         # Populate the DP table
-        for j in range(1, height):
+        for j in range(height):
             for i in range(width):
+                if j == 0:
+                    dp[j][i] = energy_map[j][i]
+                    continue
+                                
                 min_energy = dp[j - 1][i]
                 if i > 0:
                     min_energy = min(min_energy, dp[j - 1][i - 1])
@@ -74,20 +82,48 @@ class SeamCarver(Picture):
 
         return seam
 
+
     def find_horizontal_seam(self) -> list[int]:
         '''
-        Return a sequence of indices representing the lowest-energy horizontal seam
+        Return a sequence of indices representing the lowest-energy horizontal seam.
         '''
-        """ !! Non-functional implementation
-        self.transpose_image()
-        seam = self.find_vertical_seam()
-        self.transpose_image()
-        return seam
-        """
-        raise NotImplementedError
+        width, height = self.width(), self.height()
+        energy_map = [[self.energy(i, j) for i in range(width)] for j in range(height)]
+        dp = [[sys.maxsize] * height for _ in range(width)]
+        path = [[0] * height for _ in range(width)]
 
-    """ !! Non-functional implementation
-        def transpose_image(self):
+        for j in range(height):
+            dp[0][j] = energy_map[j][0]
+
+        for i in range(1, width):
+            for j in range(height):
+                min_energy = dp[i - 1][j]
+                if j > 0:
+                    min_energy = min(min_energy, dp[i - 1][j - 1])
+                if j < height - 1:
+                    min_energy = min(min_energy, dp[i - 1][j + 1])
+
+                dp[i][j] = energy_map[j][i] + min_energy
+
+                if min_energy == dp[i - 1][j]:
+                    path[i][j] = j
+                elif j > 0 and min_energy == dp[i - 1][j - 1]:
+                    path[i][j] = j - 1
+                else:
+                    path[i][j] = j + 1
+
+        min_index = dp[-1].index(min(dp[-1]))
+        seam = [0] * width
+        for i in range(width - 1, -1, -1):
+            seam[i] = min_index
+            min_index = path[i][min_index]
+
+        return seam
+
+
+    """ 
+    !! Non-functional implementation
+    def transpose_image(self):
         '''
         Transpose the image (swap width and height)
         '''
@@ -103,6 +139,7 @@ class SeamCarver(Picture):
         # Update dimensions
         self._width, self._height = self._height, self._width 
         """
+
 
     def remove_vertical_seam(self, seam: list[int]):
         '''
@@ -122,11 +159,21 @@ class SeamCarver(Picture):
 
         self._width -= 1
 
+
     def remove_horizontal_seam(self, seam: list[int]):
-        '''
-        Remove a horizontal seam from the picture
-        '''
-        raise NotImplementedError
+        if len(seam) != self.width():
+            raise SeamError("Invalid seam length.")
+        if self.height() <= 1:
+            raise SeamError("Cannot remove seam from image with height <= 1.")
+
+        for i in range(self.width()):
+            if i > 0 and abs(seam[i] - seam[i - 1]) > 1:
+                raise SeamError("Invalid seam: adjacent entries differ by more than 1.")
+            for j in range(seam[i], self.height() - 1):
+                self[i, j] = self[i, j + 1]
+            del self[i, self.height() - 1]
+
+        self._height -= 1
 
 
 class SeamError(Exception):
