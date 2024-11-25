@@ -3,6 +3,8 @@
 from picture import Picture
 import math
 import sys
+from PIL import Image
+
 
 class SeamCarver(Picture):
     ## TO-DO: fill in the methods below
@@ -10,19 +12,13 @@ class SeamCarver(Picture):
         '''
         Return the energy of pixel at column i and row j
         '''
-        """ 
-        ^ For debugging purposes
-        print (i, j)
-        print(self.items())
-        print(self.width(), self.height()) 
-        """
         if not (0 <= i < self.width() and 0 <= j < self.height()):
             raise IndexError("Pixel indices out of range.")
 
-        left = self[(i - 1) % self.width() if i > 0 else self.width() - 2, j]
-        right = self[i % self.width() if i < self.width() else 0, j]
-        up = self[i, (j - 1) % self.height() if j > 0 else self.height() - 2]
-        down = self[i, j % self.height() if j < self.height() else 0]
+        left = self[i-1 if i > 0 else self.width() - 1, j]
+        right = self[i+1 if i < self.width() - 1 else 0, j]
+        up = self[i, j-1 if j > 0 else self.height() - 1] 
+        down = self[i, j+1 if j < self.height() - 1 else 0] 
 
         # Compute gradients for RGB components
         dx_r, dx_g, dx_b = (right[0] - left[0], right[1] - left[1], right[2] - left[2])
@@ -78,31 +74,16 @@ class SeamCarver(Picture):
         '''
         Return a sequence of indices representing the lowest-energy horizontal seam
         '''
-        """ !! Non-functional implementation
-        self.transpose_image()
-        seam = self.find_vertical_seam()
-        self.transpose_image()
-        return seam
-        """
-        raise NotImplementedError
-
-    """ !! Non-functional implementation
-        def transpose_image(self):
-        '''
-        Transpose the image (swap width and height)
-        '''
-        # Create a 2D representation of the image
-        grid = [[self[i, j] for j in range(self._height)] for i in range(self._width)]
-
-        # Transpose using a list comprehension
-        transposed_grid = list(zip(*grid))
-
-        # Rebuild the pixel dictionary from the transposed grid
-        self._pixels = {(x, y): transposed_grid[x][y] for x in range(len(transposed_grid)) for y in range(len(transposed_grid[0]))}
-
-        # Update dimensions
-        self._width, self._height = self._height, self._width 
-        """
+        # Transpose the image
+        transposed_image = self.picture().transpose(Image.Transpose.TRANSPOSE)
+        # Create a SeamCarver instance for the transposed image
+        transposed_seam_carver = SeamCarver(transposed_image)
+        # Find the vertical seam in the transposed image
+        transposed_seam = transposed_seam_carver.find_vertical_seam()
+        # Map the transposed seam back to horizontal seam
+        horizontal_seam = transposed_seam
+        
+        return horizontal_seam
 
     def remove_vertical_seam(self, seam: list[int]):
         '''
@@ -126,8 +107,21 @@ class SeamCarver(Picture):
         '''
         Remove a horizontal seam from the picture
         '''
-        raise NotImplementedError
+        # Transpose the image to swap width and height
+        transposed_image = self.picture().transpose(Image.Transpose.TRANSPOSE)
+        # Create a SeamCarver instance for the transposed image
+        transposed_seam_carver = SeamCarver(transposed_image)
+        # Remove the seam by utilizing the remove_vertical_seam
+        transposed_seam_carver.remove_vertical_seam(seam)
+        # Transpose the image back to its original dimensions
+        updated_image = transposed_seam_carver.picture().transpose(Image.Transpose.TRANSPOSE)
 
+        # Update the current object's pixel data directly
+        self._width, self._height = updated_image.size
+        self.clear()  # Clear the current pixel data
+        for j in range(self._height):
+            for i in range(self._width):
+                self[i, j] = updated_image.getpixel((i, j))
 
 class SeamError(Exception):
     pass
