@@ -35,34 +35,34 @@ class SeamCarver(Picture):
         '''
         width, height = self.width(), self.height()
         energy_map = [[self.energy(i, j) for i in range(width)] for j in range(height)]
-        dp = [[sys.maxsize] * width for _ in range(height)]
+        cumulative_energy = [[0] * width for _ in range(height)]
         path = [[0] * width for _ in range(height)]
 
         # Initialize the top row
         for i in range(width):
-            dp[0][i] = energy_map[0][i]
+            cumulative_energy[0][i] = energy_map[0][i]
 
-        # Populate the DP table
+        # Populate the energy table
         for j in range(1, height):
             for i in range(width):
-                min_energy = dp[j - 1][i]
+                min_energy = cumulative_energy[j - 1][i]
                 if i > 0:
-                    min_energy = min(min_energy, dp[j - 1][i - 1])
+                    min_energy = min(min_energy, cumulative_energy[j - 1][i - 1])
                 if i < width - 1:
-                    min_energy = min(min_energy, dp[j - 1][i + 1])
+                    min_energy = min(min_energy, cumulative_energy[j - 1][i + 1])
 
-                dp[j][i] = energy_map[j][i] + min_energy
+                cumulative_energy[j][i] = energy_map[j][i] + min_energy
 
                 # Track the path
-                if min_energy == dp[j - 1][i]:
+                if min_energy == cumulative_energy[j - 1][i]:
                     path[j][i] = i
-                elif i > 0 and min_energy == dp[j - 1][i - 1]:
+                elif i > 0 and min_energy == cumulative_energy[j - 1][i - 1]:
                     path[j][i] = i - 1
                 else:
                     path[j][i] = i + 1
 
         # Backtrack to find the seam
-        min_index = dp[-1].index(min(dp[-1]))
+        min_index = cumulative_energy[-1].index(min(cumulative_energy[-1]))
         seam = [0] * height
         for j in range(height - 1, -1, -1):
             seam[j] = min_index
